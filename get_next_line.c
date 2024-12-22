@@ -6,53 +6,128 @@
 /*   By: asaracut <asaracut@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/15 22:54:01 by asaracut          #+#    #+#             */
-/*   Updated: 2024/11/24 07:07:07 by asaracut         ###   ########.fr       */
+/*   Updated: 2024/12/22 04:41:17 by asaracut         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
 
-char	*get_next_line(int fd)
+char	*ft_next_line(char *buffer)
 {
-	char	document[128];
-	ssize_t	document_fin;
-	char	*res;
+	int		i;
+	int		j;
+	char	*line;
+
+	i = 0;
+	while (buffer[i] && buffer[i] != '\n')
+		i++;
+	if (!buffer[i])
+	{
+		free(buffer);
+		return (NULL);
+	}
+	line = ft_calloc((ft_strlen(buffer) - i + 1), sizeof(char));
+	i++;
+	j = 0;
+	while (buffer[i])
+		line[j++] = buffer[i++];
+	free(buffer);
+	return (line);
+}
+
+char	*ft_one_line(char *buffer)
+{
+	char	*line;
 	int		i;
 
 	i = 0;
-	document_fin = read(fd, document, 127);
-	if (document_fin < 0)
-		return ("erreur d'encodage");
-	document[document_fin] = '\0';
-	while (document[i] != '\n' && document[i] != '\0')
-		i++;
-	res = malloc((sizeof(char) * i) + 1);
-	if (!res)
+	if (!buffer[i])
 		return (NULL);
+	while (buffer[i] && buffer[i] != '\n')
+		i++;
+	line = ft_calloc(i + 2, sizeof(char));
 	i = 0;
-	while (document[i] != '\n' && document[i] != '\0')
+	while (buffer[i] && buffer[i] != '\n')
 	{
-		res[i] = document[i];
+		line[i] = buffer[i];
 		i++;
 	}
-	res[i] = '\0';
+	if (buffer[i] && buffer[i] == '\n')
+		line[i++] = '\n';
+	return (line);
+}
+
+int	read_and_join(int fd, char **res, char *buffer)
+{
+	int	byte_read;
+
+	byte_read = read(fd, buffer, BUFFER_SIZE);
+	if (byte_read == -1)
+	{
+		free(*res);
+		*res = NULL;
+		return (-1);
+	}
+	buffer[byte_read] = '\0';
+	*res = ft_free_and_join(*res, buffer);
+	if (!*res)
+		return (-1);
+	return (byte_read);
+}
+
+char	*read_file(int fd, char *res)
+{
+	char	*buffer;
+	int		byte_read;
+
+	if (!res)
+		res = ft_calloc(1, 1);
+	if (!res)
+		return (NULL);
+	buffer = ft_calloc(BUFFER_SIZE + 1, sizeof(char));
+	if (!buffer)
+		return (NULL);
+	byte_read = 1;
+	while (byte_read > 0)
+	{
+		byte_read = read_and_join(fd, &res, buffer);
+		if (byte_read == -1)
+		{
+			free(buffer);
+			return (NULL);
+		}
+		if (ft_strchr(buffer, '\n'))
+			byte_read = -1;
+	}
+	free(buffer);
 	return (res);
 }
-/*
-int	main(void)
-{
-	int		fd;
-	
-	fd = open("test.txt", O_RDONLY);
-	if (fd < 0)
-		return (printf("error ouverture\n"));
 
-	printf("\n\n%s\n\n\n", get_next_line(fd));
-	
-	close(fd);
-	return (0);
-}*/
+char	*get_next_line(int fd)
+{
+	static char	*buffer;
+	char		*line;
+
+	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, 0, 0) < 0)
+	{
+		if (buffer)
+		{
+			free(buffer);
+			buffer = NULL;
+		}
+		return (NULL);
+	}
+	buffer = read_file(fd, buffer);
+	if (!buffer)
+	{
+		if (buffer)
+		{
+			free(buffer);
+			buffer = NULL;
+		}
+		return (NULL);
+	}
+	line = ft_one_line(buffer);
+	buffer = ft_next_line(buffer);
+	return (line);
+}
