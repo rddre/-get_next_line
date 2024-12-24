@@ -6,7 +6,7 @@
 /*   By: asaracut <asaracut@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/15 22:54:01 by asaracut          #+#    #+#             */
-/*   Updated: 2024/12/23 05:44:46 by asaracut         ###   ########.fr       */
+/*   Updated: 2024/12/24 16:39:04 by asaracut         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,8 @@ char	*ft_next_line(char *buffer)
 		return (NULL);
 	}
 	line = ft_calloc((ft_strlen(buffer) - i + 1), sizeof(char));
+	if (!line)
+		return (NULL);
 	i++;
 	j = 0;
 	while (buffer[i])
